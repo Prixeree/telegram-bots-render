@@ -222,6 +222,15 @@ TECHNICAL
 - Phone uses a tel: link. WhatsApp links use target="_blank" rel="noopener".
 - Text contrast at least 4.5:1.
 
+DESIGN CRAFT & PRINCIPLES (The bar is "stunning", not just "functional")
+- Every pixel is intentional, every interaction deliberate. Avoid AI defaults: no generic purple/pink gradients, no emoji as icon substitutes (use FontAwesome), no cards with colored left-borders.
+- Typography Pairing: Pick 2 Google Fonts fitting the niche (e.g. Playfair Display / Syne / Plus Jakarta Sans for headings, DM Sans / Inter / Outfit for body). Set text-wrap: pretty on body copy and clamp() or fluid Tailwind utility scaling for headlines.
+- Visual Depth & Polish: Subtle noise/gradients, soft backdrop-blur (backdrop-blur-md), layered borders with opacity (border-white/10 or border-slate-200/80), smooth hover transitions (duration-300 ease-out hover:-translate-y-1 hover:shadow-xl).
+- Interactive Micro-interactions: Active/hover states for all clickable elements with accessible focus rings (focus:ring-2 focus:ring-offset-2).
+- Scroll-Reveal: Lightweight IntersectionObserver script to add a subtle fade-in-up class to sections as they enter the viewport (respecting @media (prefers-reduced-motion)).
+- Contrast & Legibility: Text contrast must strictly meet WCAG AA (≥ 4.5:1). Dark hero overlays must guarantee white headline readability.
+- Placeholder Philosophy: If any secondary detail is unknown, use clean, professional placeholders or omit it entirely. Never invent fake years, guarantees, fake awards, or employee names.
+
 RESPONSIVE RULES (non-negotiable, most visitors will open this on a phone)
 - <head> must contain exactly: <meta name="viewport" content="width=device-width, initial-scale=1">
 - Load the Tailwind CDN script first, then the tailwind.config script.
