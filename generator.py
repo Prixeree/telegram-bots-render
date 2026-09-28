@@ -167,35 +167,89 @@ async def generate_website_html(business: Dict[str, Any]) -> str:
 
     wa_link = f"https://wa.me/{clean_ph}" if clean_ph else "#"
 
-    prompt = f"""You are a world-class Frontend Engineer and UI/UX Designer.
-Generate a complete, breathtaking, modern, image-rich, mobile-first responsive landing page for:
-- Business: {name}
-- Niche: {niche} in {city}
-- Rating: {rating} Stars ({reviews}+ Google reviews)
+    system_instruction = """You are a senior front-end engineer and brand designer who builds high-converting websites for local businesses. You output ONE complete, production-ready HTML file and nothing else.
+
+OUTPUT FORMAT
+- Raw HTML only. Start with <!DOCTYPE html>, end with </html>. No markdown fences, no commentary.
+- Never truncate. No TODOs, no "Lorem ipsum", no placeholder text.
+- Tailwind via <script src="https://cdn.tailwindcss.com"></script>, followed by a small inline tailwind.config script defining your brand colors and font families.
+- Font Awesome: <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+- Google Fonts: one heading font + one body font that fit the niche, with fallback stacks.
+
+DESIGN DIRECTION (choose a distinct look for the niche, never reuse one template)
+- Clinic/dentist: airy, clean, trustworthy. White space, teal or blue accent.
+- Salon/spa/beauty: editorial, warm neutrals, elegant serif headings.
+- Gym/fitness: dark, high contrast, bold condensed type, one neon accent.
+- Restaurant/cafe: warm, rich, photo-led, large imagery.
+- Plumber/electrician/auto/repair: confident, bold, strong CTA color, trust-focused.
+- Anything else: pick a palette and type pairing that fits the niche.
+- Define 1 primary, 1 accent and neutrals. No generic purple-blue gradients, no rows of identical cards.
+- Generous spacing, rounded-2xl corners, soft shadows, hover states, scroll-reveal animations (IntersectionObserver), respect prefers-reduced-motion.
+
+IMAGES (none are provided, you choose them)
+- Use stock photos that fit the niche and each section: one hero, one about photo, and one per service.
+- Primary source: Unsplash CDN URLs in the form https://images.unsplash.com/photo-PHOTOID?auto=format&fit=crop&w=1600&q=80. Use ONLY photo IDs you genuinely know are real and on-topic. Never make up an ID.
+- Fallback source: https://loremflickr.com/WIDTH/HEIGHT/keyword1,keyword2?lock=NUMBER, with 1-3 specific keywords for the niche and section (for example dentist,clinic). Use a different lock number for every image so photos differ.
+- If you are not sure of a real Unsplash ID, use the fallback URL directly as the src.
+- Every <img> has: a descriptive alt, a data-fallback attribute holding its own loremflickr URL, object-cover, and a fixed aspect-ratio container with a brand-colored gradient background.
+- Include one small inline script: on the first error of an <img>, swap its src to its data-fallback; on the second error, hide the <img> so the gradient shows through.
+- loading="lazy" on everything except the hero.
+- Hero: full-bleed image with a dark gradient overlay so text stays readable.
+- Testimonial avatars: do not use photos. Use colored circles with the reviewer's initials.
+
+COPY
+- Write specific, benefit-led local copy using ONLY the facts provided. Do not invent years in business, awards, certifications, prices, staff names or guarantees.
+- Choose 4 services that are typical for the niche and describe each in 1-2 benefit-led sentences.
+- H1 includes the niche and city.
+- Testimonials: 3 short, believable, non-specific reviews from first name + last initial. Make no claims that can't be verified (no dates, prices or named staff).
+
+SECTIONS (in this order)
+1. Sticky nav: name, anchor links, Call button, mobile hamburger (tiny inline JS)
+2. Hero: H1, subheadline, rating pill with stars, primary WhatsApp CTA + secondary Call CTA
+3. Services: 4 cards with photos
+4. About: photo + short story + 3 trust points
+5. How it works: 3 steps
+6. Testimonials: 3 cards with initials avatars
+7. Location & contact: address, tap-to-call, Google Maps iframe (https://maps.google.com/maps?q=URL_ENCODED_ADDRESS&output=embed)
+8. Final CTA band
+9. Footer
+10. Floating WhatsApp button (fixed bottom-right, z-50, subtle pulse, respects safe-area)
+
+TECHNICAL
+- Mobile-first, perfect at 375px, no horizontal scroll, tap targets at least 44px.
+- Semantic HTML (header/main/section/footer), one h1, meta title + description + viewport + theme-color.
+- LocalBusiness JSON-LD.
+- Phone uses a tel: link. WhatsApp links use target="_blank" rel="noopener".
+- Text contrast at least 4.5:1."""
+
+    user_prompt = f"""Build the landing page for this business.
+
+- Name: {name}
+- Niche: {niche}
+- City: {city}
+- Rating: {rating}/5 from {reviews}+ Google reviews
 - Phone: {phone}
 - Address: {address}
-- WhatsApp Booking: {wa_link}
+- WhatsApp booking link: {wa_link}
 
-EXACT IMAGE ASSETS TO USE:
-- Hero Photo: {assets['hero']}
-- About Photo: {assets['about']}
-- Service 1 ({s1_title}): {s1_img}
-- Service 2 ({s2_title}): {s2_img}
-- Service 3 ({s3_title}): {s3_img}
-- Service 4 ({s4_title}): {s4_img}
-- Testimonials Avatars: {VERIFIED_AVATARS[0]}, {VERIFIED_AVATARS[1]}, {VERIFIED_AVATARS[2]}
+Return the full HTML now."""
 
-CRITICAL RULES:
-1. Output ONLY the raw HTML source starting with <!DOCTYPE html> and ending with </html>.
-2. No markdown wrappers.
-3. Include Tailwind CSS CDN (<script src="https://cdn.tailwindcss.com"></script>) and FontAwesome icons (<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">).
-4. Include Hero section, Services grid with photos, About section with photo, Testimonials with avatars, and WhatsApp floating CTA.
-"""
     api_key = os.getenv("GEMINI_API_KEY", GEMINI_API_KEY)
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={api_key}"
-    payload = {"contents": [{"parts": [{"text": prompt}]}]}
+    payload = {
+        "system_instruction": {
+            "parts": [{"text": system_instruction}]
+        },
+        "contents": [
+            {"parts": [{"text": user_prompt}]}
+        ],
+        "generationConfig": {
+            "temperature": 0.3,
+            "maxOutputTokens": 8192
+        }
+    }
 
-    async with httpx.AsyncClient(timeout=45.0) as client:
+    async with httpx.AsyncClient(timeout=60.0) as client:
         resp = await client.post(url, json=payload)
         data = resp.json()
         raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
