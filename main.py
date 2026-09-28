@@ -80,9 +80,13 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-@app.get("/health", response_class=PlainTextResponse)
+@app.api_route("/health", methods=["GET", "HEAD"], response_class=PlainTextResponse)
 async def health_check():
     """UptimeRobot ping target to keep Render service awake 24/7."""
+    return "ok"
+
+@app.api_route("/", methods=["GET", "HEAD"], response_class=PlainTextResponse)
+async def root():
     return "ok"
 
 @app.post("/webhook/bot1")
