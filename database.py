@@ -303,6 +303,56 @@ class UnifiedDatabase:
                 await db.commit()
                 return True
 
+    async def delete_leads(self, ids: List[int]) -> int:
+        if not ids:
+            return 0
+        deleted = 0
+        if self.is_pg:
+            async with self.pg_pool.acquire() as conn:
+                res = await conn.execute("DELETE FROM leads WHERE id = ANY($1)", ids)
+                # res is string like 'DELETE 3'
+                try:
+                    deleted = int(res.split(" ")[-1])
+                except Exception:
+                    deleted = len(ids)
+        else:
+            async with aiosqlite.connect(self.sqlite_path) as db:
+                ph_marks = ",".join("?" * len(ids))
+                cur = await db.execute(f"DELETE FROM leads WHERE id IN ({ph_marks})", ids)
+                deleted = cur.rowcount
+                await db.commit()
+        return deleted
+
+    async def delete_unused_leads(self) -> int:
+        deleted = 0
+        if self.is_pg:
+            async with self.pg_pool.acquire() as conn:
+                res = await conn.execute("DELETE FROM leads WHERE demo_website_url IS NULL OR demo_website_url = ''")
+                try:
+                    deleted = int(res.split(" ")[-1])
+                except Exception:
+                    deleted = 0
+        else:
+            async with aiosqlite.connect(self.sqlite_path) as db:
+                cur = await db.execute("DELETE FROM leads WHERE demo_website_url IS NULL OR demo_website_url = ''")
+                deleted = cur.rowcount
+                await db.commit()
+        return deleted
+
+    async def clear_all_leads(self) -> int:
+        deleted = 0
+        if self.is_pg:
+            async with self.pg_pool.acquire() as conn:
+                res = await conn.execute("TRUNCATE TABLE leads RESTART IDENTITY CASCADE")
+                deleted = 1
+        else:
+            async with aiosqlite.connect(self.sqlite_path) as db:
+                cur = await db.execute("DELETE FROM leads")
+                deleted = cur.rowcount
+                await db.execute("DELETE FROM sqlite_sequence WHERE name='leads'")
+                await db.commit()
+        return deleted
+
     async def get_lead_stats(self) -> Dict[str, Any]:
         if self.is_pg:
             async with self.pg_pool.acquire() as conn:

@@ -91,7 +91,10 @@ async def help_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "📌 *Examples:*\n"
         "• `Dental clinics in Pune 10 20+ reviews`\n"
         "• `Bakeries in Bangalore 10`\n"
-        "• `Car repair in Indore 8`"
+        "• `Car repair in Indore 8`\n\n"
+        "🗑️ *Database Cleanup:*\n"
+        "• `/clearleads` - Wipe all unused leads (preserves leads with websites)\n"
+        "• `/clearleads 1 2 5` - Delete specific lead IDs (`LEAD-1`, etc.)"
     )
     await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
 
@@ -125,6 +128,53 @@ async def export_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         document=file_bytes,
         filename=file_bytes.name,
         caption="📁 Here is your verified leads export from the database.",
+    )
+
+async def clearleads_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle /clearleads command to delete unused leads or specific IDs."""
+    user = update.effective_user
+    if not is_authorized(user):
+        return
+
+    args = context.args or []
+    # If arguments provided: parse specific lead IDs
+    if args:
+        raw_text = " ".join(args).upper()
+        # Find all numbers or LEAD-X patterns
+        # e.g. "LEAD-1 2", "1, 2, 5", "LEAD-10"
+        ids_to_del = []
+        tokens = re.split(r"[\s,]+", raw_text)
+        for t in tokens:
+            m = re.search(r"^(?:LEAD-?|#)?(\d+)$", t, re.IGNORECASE)
+            if m:
+                ids_to_del.append(int(m.group(1)))
+
+        if not ids_to_del:
+            await update.message.reply_text(
+                "ℹ️ *Usage for specific deletion:*\n"
+                "• `/clearleads 1 2 5`\n"
+                "• `/clearleads LEAD-1 LEAD-2`\n"
+                "• Or just `/clearleads` to wipe all unused leads!",
+                parse_mode=ParseMode.MARKDOWN
+            )
+            return
+
+        deleted = await unified_db.delete_leads(ids_to_del)
+        id_str = ", ".join([f"`LEAD-{i}`" for i in ids_to_del])
+        await update.message.reply_text(
+            f"🗑️ *Deleted {deleted} lead(s):*\n{id_str}\n\n"
+            f"⚡ These IDs are now removed from your database.",
+            parse_mode=ParseMode.MARKDOWN
+        )
+        return
+
+    # If no args: delete all unused leads (where demo_website_url is empty)
+    deleted = await unified_db.delete_unused_leads()
+    await update.message.reply_text(
+        f"🧹 *Cleaned up {deleted} unused lead(s)!*\n\n"
+        f"✅ Kept all leads that have demo websites attached.\n"
+        f"🗑️ Removed leads without websites to keep your database tidy.",
+        parse_mode=ParseMode.MARKDOWN
     )
 
 async def search_leads_worker(chat_id: int, user_id: int, query_text: str, context: ContextTypes.DEFAULT_TYPE):
@@ -224,5 +274,6 @@ def setup_lead_bot(token: str) -> Application:
     app.add_handler(CommandHandler("help", help_handler))
     app.add_handler(CommandHandler("stats", stats_handler))
     app.add_handler(CommandHandler("export", export_handler))
+    app.add_handler(CommandHandler("clearleads", clearleads_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
     return app
