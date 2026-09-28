@@ -222,14 +222,26 @@ TECHNICAL
 - Phone uses a tel: link. WhatsApp links use target="_blank" rel="noopener".
 - Text contrast at least 4.5:1.
 
-DESIGN CRAFT & PRINCIPLES (The bar is "stunning", not just "functional")
-- Every pixel is intentional, every interaction deliberate. Avoid AI defaults: no generic purple/pink gradients, no emoji as icon substitutes (use FontAwesome), no cards with colored left-borders.
-- Typography Pairing: Pick 2 Google Fonts fitting the niche (e.g. Playfair Display / Syne / Plus Jakarta Sans for headings, DM Sans / Inter / Outfit for body). Set text-wrap: pretty on body copy and clamp() or fluid Tailwind utility scaling for headlines.
-- Visual Depth & Polish: Subtle noise/gradients, soft backdrop-blur (backdrop-blur-md), layered borders with opacity (border-white/10 or border-slate-200/80), smooth hover transitions (duration-300 ease-out hover:-translate-y-1 hover:shadow-xl).
-- Interactive Micro-interactions: Active/hover states for all clickable elements with accessible focus rings (focus:ring-2 focus:ring-offset-2).
-- Scroll-Reveal: Lightweight IntersectionObserver script to add a subtle fade-in-up class to sections as they enter the viewport (respecting @media (prefers-reduced-motion)).
-- Contrast & Legibility: Text contrast must strictly meet WCAG AA (≥ 4.5:1). Dark hero overlays must guarantee white headline readability.
-- Placeholder Philosophy: If any secondary detail is unknown, use clean, professional placeholders or omit it entirely. Never invent fake years, guarantees, fake awards, or employee names.
+DESIGN CRAFT & 20-PILLAR ARCHITECTURE (The bar is "stunning", not just "functional")
+- Spacing & Grid System (web-spacing-grid): Strict 8pt spatial grid (4px, 8px, 12px, 16px, 24px, 32px, 48px, 64px, 96px). Parent container padding must always exceed child gaps (e.g. card p-6 or p-8 with gap-4). Avoid "Centered-Everything Syndrome" — anchor descriptive body copy to the left; use asymmetric balance (7:5 or 8:4 splits on desktop) and bento card rhythm.
+- Color Systems & Hierarchy (web-color-systems): Apply the 60-30-10 spatial rule (60% dominant neutral canvas, 30% structural contrast/cards, 10% high-intent CTA accent). Tint all neutrals with 4-8% brand undertone — NEVER use dead `#000000` pitch black or lifeless `#888888` gray. On dark themes, use obsidian tinted slate (e.g. `#070c18` or `#0b1120`) with elevated surface tiers.
+- Typography Discipline (web-typography):
+  * Pick 2 distinct Google Fonts matching the niche (e.g. Playfair Display, Plus Jakarta Sans, Syne, Fraunces for display; DM Sans, Inter, Plus Jakarta Sans for body).
+  * Display titles (>32px): tight line-height (`leading-[1.05]` to `leading-[1.15]`) and negative tracking (`tracking-tight` or `-tracking-[0.03em]`).
+  * Body copy: relaxed line-height (`leading-relaxed` or `leading-normal`), measure restricted to 50-70ch (`max-w-prose` or `max-w-xl`), with `text-wrap: pretty`.
+- Micro-interactions & Tactile Feedback (web-micro-interactions):
+  * Buttons & Cards: Natural cubic-bezier motion (`transition-all duration-200 ease-out`).
+  * Tactile Press: Every clickable button must have `:active { transform: scale(0.98); }` (`active:scale-[0.98]`).
+  * Hover Lift: Cards subtly elevate on hover (`hover:-translate-y-1 hover:shadow-xl transition-all duration-300`).
+  * Focus Rings: Explicit 2px accessible focus outlines (`focus-visible:ring-2 focus-visible:ring-offset-2`).
+- Iconography & Visual Depth (web-ui-components):
+  * Use FontAwesome icons uniformly with optical alignment, consistent scale, and soft icon-badge containers (`w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center`).
+  * Glassmorphism & Borders: Restrained backdrop-blur (`backdrop-blur-md bg-white/80` or `backdrop-blur-md bg-slate-900/80`), subtle 1px border specular lines (`border border-white/10` or `border border-slate-200/80`).
+- Scroll-Reveal: Lightweight IntersectionObserver script adding a smooth fade-in-up class to sections as they scroll into view (respects `@media (prefers-reduced-motion)`).
+- Accessibility & UX Heuristics (web-accessibility-a11y & web-ux-heuristics):
+  * WCAG 2.2 AA compliant contrast (≥ 4.5:1 for body copy).
+  * Minimum 44×44px touch target on all clickable buttons, links, and hamburger triggers.
+  * Clear visual hierarchy that passes the 3-second squint test: Hero Problem/Solution -> Proof Bar -> Services Bento -> Trust/Story -> Testimonials -> Location & Instant Contact.
 
 RESPONSIVE RULES (non-negotiable, most visitors will open this on a phone)
 - <head> must contain exactly: <meta name="viewport" content="width=device-width, initial-scale=1">
