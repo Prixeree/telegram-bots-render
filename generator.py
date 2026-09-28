@@ -220,7 +220,26 @@ TECHNICAL
 - Semantic HTML (header/main/section/footer), one h1, meta title + description + viewport + theme-color.
 - LocalBusiness JSON-LD.
 - Phone uses a tel: link. WhatsApp links use target="_blank" rel="noopener".
-- Text contrast at least 4.5:1."""
+- Text contrast at least 4.5:1.
+
+RESPONSIVE RULES (non-negotiable, most visitors will open this on a phone)
+- <head> must contain exactly: <meta name="viewport" content="width=device-width, initial-scale=1">
+- Load the Tailwind CDN script first, then the tailwind.config script.
+- Write every layout mobile-first. Unprefixed Tailwind classes are the mobile layout. Add sm:, md:, lg: only to enhance for larger screens. Never design for desktop first.
+- Grids always start as one column (grid-cols-1), then md:grid-cols-2 and lg:grid-cols-4 where appropriate. Any flex row with more than two items is flex-col on mobile and md:flex-row on desktop.
+- Never use fixed pixel widths or heights on containers, images or sections (no w-[600px], h-[500px], min-w-[...]). Use w-full, max-w-*, aspect-*, min-h-*.
+- Never use w-screen or 100vw. They cause horizontal scroll.
+- Wrap every section's content in: mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8
+- Fluid type: H1 text-3xl sm:text-4xl lg:text-6xl, H2 text-2xl sm:text-3xl lg:text-4xl, body text-base (never smaller than 16px). Add break-words to headings.
+- Hero: no h-screen. Use min-h-[80vh] with py-20, stacked content, and buttons that are w-full sm:w-auto with gap-3.
+- Nav: on mobile show only the business name and a hamburger button; the links open in a dropdown panel toggled by tiny inline JS. Desktop links use hidden md:flex, the hamburger uses md:hidden.
+- Images: always w-full with object-cover inside an aspect-ratio container, never a fixed width.
+- Google Maps iframe: w-full with a fixed height such as h-72, never a fixed width.
+- Decorative absolute-positioned elements must sit inside a parent with overflow-hidden so they never extend past the viewport.
+- Floating WhatsApp button: fixed bottom-4 right-4, about 56px. Give the footer pb-24 so the button never covers content.
+- Tap targets at least 44px, at least 12px between stacked buttons.
+- Put overflow-x-hidden on <body> as a safety net only. It does not replace the rules above.
+- Before finishing, mentally check the page at 375px, 768px and 1280px: no horizontal scroll, no overlapping elements, no cut-off text."""
 
     user_prompt = f"""Build the landing page for this business.
 
