@@ -165,12 +165,17 @@ async def generate_website_html(business: Dict[str, Any]) -> str:
     s3_title, s3_img = assets["services"][2]
     s4_title, s4_img = assets["services"][3]
 
+    hero_img = assets["hero"]
+    about_img = assets["about"]
+
     wa_link = f"https://wa.me/{clean_ph}" if clean_ph else "#"
 
     system_instruction = """You are a senior front-end engineer and brand designer who builds high-converting websites for local businesses. You output ONE complete, production-ready HTML file and nothing else.
 
-OUTPUT FORMAT
-- Raw HTML only. Start with <!DOCTYPE html>, end with </html>. No markdown fences, no commentary.
+OUTPUT FORMAT & CODE RULES (CRITICAL):
+- Raw, pure HTML only. Start with <!DOCTYPE html>, end with </html>.
+- NEVER use React, JSX, Vue, template interpolation, or JavaScript map/render loops (e.g. NEVER write `{items.map(...)}`, `{{title}}`, `{r.t}`, or `${item}`).
+- Every single section, service card, review card, and navigation item MUST be fully written out as standard, hardcoded HTML tags (`<div>`, `<p>`, `<h3>`, etc.).
 - Never truncate. No TODOs, no "Lorem ipsum", no placeholder text.
 - Tailwind via <script src="https://cdn.tailwindcss.com"></script>, followed by a small inline tailwind.config script defining your brand colors and font families.
 - Font Awesome: <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -186,34 +191,34 @@ DESIGN DIRECTION (choose a distinct look for the niche, never reuse one template
 - Define 1 primary, 1 accent and neutrals. No generic purple-blue gradients, no rows of identical cards.
 - Generous spacing, rounded-2xl corners, soft shadows, hover states, scroll-reveal animations (IntersectionObserver), respect prefers-reduced-motion.
 
-IMAGES (none are provided, you choose them)
-- Use stock photos that fit the niche and each section: one hero, one about photo, and one per service.
-- Primary source: Unsplash CDN URLs in the form https://images.unsplash.com/photo-PHOTOID?auto=format&fit=crop&w=1600&q=80. Use ONLY photo IDs you genuinely know are real and on-topic. Never make up an ID.
-- Fallback source: https://loremflickr.com/WIDTH/HEIGHT/keyword1,keyword2?lock=NUMBER, with 1-3 specific keywords for the niche and section (for example dentist,clinic). Use a different lock number for every image so photos differ.
-- If you are not sure of a real Unsplash ID, use the fallback URL directly as the src.
-- Every <img> has: a descriptive alt, a data-fallback attribute holding its own loremflickr URL, object-cover, and a fixed aspect-ratio container with a brand-colored gradient background.
-- Include one small inline script: on the first error of an <img>, swap its src to its data-fallback; on the second error, hide the <img> so the gradient shows through.
-- loading="lazy" on everything except the hero.
-- Hero: full-bleed image with a dark gradient overlay so text stays readable.
-- Testimonial avatars: do not use photos. Use colored circles with the reviewer's initials.
+IMAGES (USE THE PROVIDED HIGH-RESOLUTION UNSPLASH URLS):
+- You MUST use the specific image URLs provided in the prompt for Hero, About, and each of the 4 Services.
+- Every <img> tag MUST have:
+  * An explicit src attribute with the provided URL.
+  * A descriptive alt attribute.
+  * A data-fallback attribute with a working placeholder.
+  * object-cover inside a fixed aspect-ratio container with an overflow-hidden wrapper and subtle brand background gradient.
+- Hero: full-bleed image with a dark gradient overlay so white text stays 100% readable.
+- Testimonial avatars: use styled circular initials badges (e.g. `w-12 h-12 rounded-full bg-teal-100 text-teal-700 font-bold flex items-center justify-center`).
 
-COPY
-- Write specific, benefit-led local copy using ONLY the facts provided. Do not invent years in business, awards, certifications, prices, staff names or guarantees.
-- Choose 4 services that are typical for the niche and describe each in 1-2 benefit-led sentences.
-- H1 includes the niche and city.
-- Testimonials: 3 short, believable, non-specific reviews from first name + last initial. Make no claims that can't be verified (no dates, prices or named staff).
+REVIEWS & SOCIAL PROOF (5-STAR GOOGLE REVIEWS):
+- Write 3 detailed, authentic, glowing 5-star Google reviews from real sounding local customers with full first name and last initial (e.g., "Marcus T.", "Dr. Elena Vance", "Sophia R.").
+- Include a 5-star gold star row (`<i class="fa-solid fa-star text-amber-400"></i>` x 5) on every review card.
+- Include a "Verified Google Review" badge with a small Google "G" or checkmark icon.
+- Make each review speak to real customer experiences: gentleness/pain-free care, punctuality, state-of-the-art facility, cleanliness, and welcoming staff.
+- Ensure each review card is written out in FULL HTML (3 distinct card `<div>` elements, no loops).
 
-SECTIONS (in this order)
+SECTIONS (in this order, fully written out in standard HTML):
 1. Sticky nav: name, anchor links, Call button, mobile hamburger (tiny inline JS)
-2. Hero: H1, subheadline, rating pill with stars, primary WhatsApp CTA + secondary Call CTA
-3. Services: 4 cards with photos
-4. About: photo + short story + 3 trust points
-5. How it works: 3 steps
-6. Testimonials: 3 cards with initials avatars
+2. Hero: H1, subheadline, rating pill with 5 stars, primary WhatsApp CTA + secondary Call CTA
+3. Services: 4 full HTML cards with the provided photos & benefit descriptions
+4. About: photo + short story + 3 trust checkmark points
+5. How it works: 3 distinct steps
+6. Testimonials: 3 distinct cards with 5 gold stars, verified badges, and initials avatars
 7. Location & contact: address, tap-to-call, Google Maps iframe (https://maps.google.com/maps?q=URL_ENCODED_ADDRESS&output=embed)
 8. Final CTA band
 9. Footer
-10. Floating WhatsApp button (fixed bottom-right, z-50, subtle pulse, respects safe-area)
+10. Floating WhatsApp button (fixed bottom-4 right-4, z-50, subtle pulse, respects safe-area)
 
 TECHNICAL
 - Mobile-first, perfect at 375px, no horizontal scroll, tap targets at least 44px.
@@ -262,8 +267,9 @@ RESPONSIVE RULES (non-negotiable, most visitors will open this on a phone)
 - Put overflow-x-hidden on <body> as a safety net only. It does not replace the rules above.
 - Before finishing, mentally check the page at 375px, 768px and 1280px: no horizontal scroll, no overlapping elements, no cut-off text."""
 
-    user_prompt = f"""Build the landing page for this business.
+    user_prompt = f"""Build the landing page for this business using PURE RAW HTML (no JSX, no template loops, hardcode all cards).
 
+BUSINESS DETAILS:
 - Name: {name}
 - Niche: {niche}
 - City: {city}
@@ -271,6 +277,18 @@ RESPONSIVE RULES (non-negotiable, most visitors will open this on a phone)
 - Phone: {phone}
 - Address: {address}
 - WhatsApp booking link: {wa_link}
+
+VERIFIED HIGH-RES PHOTOGRAPHY (You MUST use these exact URLs in <img> tags):
+- Hero Background Photo: {hero_img}
+- About Section Photo: {about_img}
+- Service 1 ({s1_title}): {s1_img}
+- Service 2 ({s2_title}): {s2_img}
+- Service 3 ({s3_title}): {s3_img}
+- Service 4 ({s4_title}): {s4_img}
+
+REVIEWS:
+- Render 3 authentic 5-star Google review cards with 5 gold stars (<i class="fa-solid fa-star text-amber-400"></i>), verified badges, initials avatars, and glowing customer quotes praising the service quality, gentle care, and friendliness.
+- Hardcode each of the 3 cards in standard HTML (no loops).
 
 Return the full HTML now."""
 
