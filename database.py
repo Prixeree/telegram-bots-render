@@ -36,8 +36,13 @@ class UnifiedDatabase:
         if self.is_pg:
             import asyncpg
             url = DATABASE_URL.replace("postgres://", "postgresql://")
-            # Supabase / Neon connection pool
-            self.pg_pool = await asyncpg.create_pool(url, min_size=1, max_size=5)
+            # Supabase connection pooler requires statement_cache_size=0
+            self.pg_pool = await asyncpg.create_pool(
+                url,
+                min_size=1,
+                max_size=5,
+                statement_cache_size=0
+            )
             async with self.pg_pool.acquire() as conn:
                 await conn.execute("""
                     CREATE TABLE IF NOT EXISTS leads (
