@@ -17,7 +17,7 @@ from database import unified_db, clean_phone_number
 logger = logging.getLogger("WebsiteGenerator")
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
 VERCEL_TOKEN = os.getenv("VERCEL_TOKEN", "")
 VERCEL_PROJECT = os.getenv("VERCEL_PROJECT", "demo-websites")
 
